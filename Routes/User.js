@@ -13,135 +13,234 @@ const bcrypt = require("bcrypt")
 const User = require("../Models/User.js")
 const Rol = require("../Models/Rol.js")
 
+const nodemailer = require("nodemailer")
+
 app.use(cors())
 
 process.env.SECRET_KEY = 'secret'
 
-app.get('/summarynps',(req,res) => {
+app.post('/send', (req, res) => {
+    const output = `
+      <p>You have a new contact request</p>
+      <h3>Contact Details</h3>
+      <ul>  
+        <li>Name: ${req.body.name}</li>
+        <li>Company: ${req.body.company}</li>
+        <li>Email: ${req.body.email}</li>
+        <li>Phone: ${req.body.phone}</li>
+      </ul>
+      <h3>Message</h3>
+      <p>${req.body.message}</p>
+    `;
+
+    let transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+            user: 'sergioesteban2049@gmail.com',
+            pass: 'Ecfw2000'
+        }
+    });
+
+    let mailOptions = {
+        from: 'sergioesteban2049@gmail.com',
+        to: [
+            'sergioesteban2049@gmail.com', 'chechomindtricks@gmail.com'
+        ],
+        subject: 'Notificaciones NPS TUGÓ',
+        text: 'Notificacion NPS TUGÓ',
+        html: output
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+            return console.log(error);
+        }
+        console.log('Mensaje Enviado', info.messageId);
+        res.json('112233')
+    });
+})
+
+app.get('/summarynps', (req, res) => {
     const op = Sequelize.Op
 
     var respuesta = []
 
-    const promoters = 
-        Feedback.findAll({
+    const promoters = Feedback
+        .findAll({
             attributes: [
-                [Sequelize.fn('COUNT', Sequelize.col('respuesta')), 'Promoters']
+                [
+                    Sequelize.fn('COUNT', Sequelize.col('respuesta')),
+                    'Promoters'
+                ]
             ],
             where: {
                 respuesta: {
                     [op.gte]: 9
                 }
             }
-        }).then(response => {
+        })
+        .then(response => {
             respuesta.push(response[0])
         });
-        
-    const detractors = 
-        Feedback.findAll({
+
+    const detractors = Feedback
+        .findAll({
             attributes: [
-                [Sequelize.fn('COUNT', Sequelize.col('respuesta')), 'Detractors']],
-                where: {
-                    respuesta: {
-                        [op.lte]: 6
-                    }
+                [
+                    Sequelize.fn('COUNT', Sequelize.col('respuesta')),
+                    'Detractors'
+                ]
+            ],
+            where: {
+                respuesta: {
+                    [op.lte]: 6
                 }
-    }).then(response => {
-        respuesta.push(response[0])
-    });
-     
-    Feedback.findAll({
-        attributes: [
-            [Sequelize.fn('COUNT' ,Sequelize.col('respuesta')), 'Passives']],
-        where: {
-            respuesta: {
-                [op.or]: {
-                    [op.eq]: 7,
+            }
+        })
+        .then(response => {
+            respuesta.push(response[0])
+        });
+
+    Feedback
+        .findAll({
+            attributes: [
+                [
+                    Sequelize.fn('COUNT', Sequelize.col('respuesta')),
+                    'Passives'
+                ]
+            ],
+            where: {
+                respuesta: {
+                    [op.or]: {
+                        [op.eq]: 7,
                         [op.or]: {
                             [op.eq]: 8
-                        } 
-                }}}
+                        }
+                    }
+                }
+            }
 
-    })
-    .then(response => {
-        respuesta.push(response[0])
-        res.send(respuesta)
-    })
         })
+        .then(response => {
+            respuesta.push(response[0])
+            res.send(respuesta)
+        })
+})
 
-app.post('/feedback', (req,res) => {
+app.post('/feedback', (req, res) => {
     var fechaactual = Date.now()
     const userFeedback = {
         nombre: req.body.nombre,
         clasificacion: req.body.clasificacion,
         argumento: req.body.argumento,
         fecha: fechaactual,
-        respuesta: req.body.respuesta        
+        respuesta: req.body.respuesta
     }
-    Feedback.create(userFeedback)
-    .then(response => {
-        res.json('ok')
+    Feedback
+        .create(userFeedback)
+        .then(response => {
+            res.json('ok')
+        })
+        .catch(err => {
+            res.send(err)
+        })
     })
-    .catch(err => {
-        res.send(err)
-    })
-})
 
-app.post('/argument', (req,res) => {
-    Argument.findAll({
-        attributes: ['id','pregunta'],
-        where: {
-            clasificacion: req.body.clasificacion,
-            idformulario: req.body.idformulario
-        }
+app.post('/argument', (req, res) => {
+    Argument
+        .findAll({
+            attributes: [
+                'id', 'pregunta'
+            ],
+            where: {
+                clasificacion: req.body.clasificacion,
+                idformulario: req.body.idformulario
+            }
+        })
+        .then(response => {
+            res.json(response)
+        })
+        .catch(err => {
+            res.send(err)
+        })
     })
-    .then(argumentz => {
-        res.json(argumentz)
-    })
-    .catch(err => {
-        res.send(err)
-    })
-})
 
-app.get('/encuestas', (req,res)=>{
-    Encuesta.findAll()
-    .then(encuesta => {
-        res.json(encuesta)
-    })
-    .catch(err => {
-        res.send(err)
-    })
-})
+app.put('/argument', (req, res) => {
 
-app.post('/encuesta', (req,res)=>{
-    Encuesta.findAll({
-        attributes: ['pregunta'],
-        where: {
-            id: req.body.id
-        }
-    })
-    .then(encuesta =>{
-        res.json(encuesta)
-    })
-    .catch(err =>{
-        res.send(err)
-    })
-})
+    const argument = {
+        pregunta: req.body.pregunta,
+        idformulario: req.body.idformulario,
+        emails: req.body.emails,
+        clasificacion: req.body.clasificacion
+    }
 
-app.get('/getRoles', (req,res)=>{
+    Argument
+        .create(argument)
+        .then(response => {
+            res.json(response)
+        })
+        .catch(err => {
+            res.send(err)
+        })
+    })
 
-    Rol.findAll({
-        attributes: ['rol']
+app.get('/encuestas', (req, res) => {
+    Encuesta
+        .findAll()
+        .then(encuesta => {
+            res.json(encuesta)
+        })
+        .catch(err => {
+            res.send(err)
+        })
     })
-    .then(rol =>{
-        res.json({ status: rol})
-    })
-    .catch(err =>{
-        res.send(err)
-    })
-    
-})
 
-app.post('/register', (req,res)=>{   
+app.post('/encuesta', (req, res) => {
+    Encuesta
+        .findAll({
+            attributes: ['pregunta'],
+            where: {
+                id: req.body.id
+            }
+        })
+        .then(encuesta => {
+            res.json(encuesta)
+        })
+        .catch(err => {
+            res.send(err)
+        })
+    })
+
+app.put('/encuesta', (req, res) => {
+    const encuesta = {
+        nombre: req.body.nombre,
+        pregunta: req.body.pregunta
+    }
+
+    Encuesta
+        .create(encuesta)
+        .then(encuesta => {
+            res.json(encuesta)
+        })
+        .catch(err => {
+            res.json(err)
+        })
+    })
+
+app.get('/getRoles', (req, res) => {
+
+    Rol
+        .findAll({attributes: ['rol']})
+        .then(rol => {
+            res.json({status: rol})
+        })
+        .catch(err => {
+            res.send(err)
+        })
+
+    })
+
+app.post('/register', (req, res) => {
 
     const today = new Date()
     const userData = {
@@ -150,73 +249,85 @@ app.post('/register', (req,res)=>{
         rol: req.body.rol,
         fecha: today
     }
-    User.findOne({
-        where:{
-            email: req.body.email
-        }
-    })
-    .then(user =>{
-        if(!user){
-            bcrypt.hash(req.body.password, 10,(err,hash) => {
-                userData.password = hash
-                User.create(userData)
-                .then(user =>{
-                    res.json({status: user.email + 'registered'})
-                })
-                .catch(err => {
-                    res.send('error:' + err)
-                })
-            })
-        }else{
-            res.json({error: "Registered Previously"})
-        }
-    })
-    .catch(err => {
-        res.send('error:' + err)
-    })
-})
-
-app.post('/login', (req,res)=>{
-    User.findOne({
-        where:{
-            email: req.body.email
-        }
-    })
-    .then(user => {
-        if(user){
-            if(bcrypt.compareSync(req.body.password, user.password)){
-                let tok = jwt.sign(user.dataValues, process.env.SECRET_KEY,{
-                    expiresIn: 1440
-                })
-                res.send(tok)
+    User
+        .findOne({
+            where: {
+                email: req.body.email
             }
-        } else {
-          res.status(400).json({ error: 'User does not exist' })
-        }
-      })
-      .catch(err => {
-        res.status(400).json({ error: err })
-      })
-  })
-  
-  app.get('/dashboard', (req, res) => {
+        })
+        .then(user => {
+            if (!user) {
+                bcrypt.hash(req.body.password, 10, (err, hash) => {
+                    userData.password = hash
+                    User
+                        .create(userData)
+                        .then(user => {
+                            res.json({
+                                status: user.email + 'registered'
+                            })
+                        })
+                        .catch(err => {
+                            res.send('error:' + err)
+                        })
+                    })
+            } else {
+                res.json({error: "Registered Previously"})
+            }
+        })
+        .catch(err => {
+            res.send('error:' + err)
+        })
+    })
+
+app.post('/login', (req, res) => {
+    User
+        .findOne({
+            where: {
+                email: req.body.email
+            }
+        })
+        .then(user => {
+            if (user) {
+                if (bcrypt.compareSync(req.body.password, user.password)) {
+                    let tok = jwt.sign(user.dataValues, process.env.SECRET_KEY, {expiresIn: 1440})
+                    res.send(tok)
+                }
+            } else {
+                res
+                    .status(400)
+                    .json({error: 'User does not exist'})
+            }
+        })
+        .catch(err => {
+            res
+                .status(400)
+                .json({error: err})
+        })
+    })
+
+app.get('/dashboard', (req, res) => {
     var decoded = jwt.verify(req.headers['authorization'], process.env.SECRET_KEY)
-  
-    User.findOne({
-      where: {
-        id: decoded.id
-      }
+
+    User
+        .findOne({
+            where: {
+                id: decoded.id
+            }
+        })
+        .then(user => {
+            if (user) {
+                res.json(user)
+            } else {
+                res
+                    .status(400)
+                    .json({error: 'Usuario no Registrado'})
+            }
+        })
+        .catch(err => {
+            res
+                .status(400)
+                .json({error: err})
+        })
     })
-      .then(user => {
-        if (user) {
-          res.json(user)
-        } else {
-            res.status(400).json({ error: 'Usuario no Registrado'})
-        }
-    })
-    .catch(err => {
-        res.status(400).json({error: err})
-    })
-})
 
 module.exports = app
