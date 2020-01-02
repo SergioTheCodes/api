@@ -18,7 +18,37 @@ app.use(cors())
 process.env.SECRET_KEY = 'secret'
 
 app.get('/summarynps',(req,res) => {
-    const op = Sequelize.Op 
+    const op = Sequelize.Op
+
+    var respuesta = []
+
+    const promoters = 
+        Feedback.findAll({
+            attributes: [
+                [Sequelize.fn('COUNT', Sequelize.col('respuesta')), 'Promoters']
+            ],
+            where: {
+                respuesta: {
+                    [op.gte]: 9
+                }
+            }
+        }).then(response => {
+            respuesta.push(response[0])
+        });
+        
+    const detractors = 
+        Feedback.findAll({
+            attributes: [
+                [Sequelize.fn('COUNT', Sequelize.col('respuesta')), 'Detractors']],
+                where: {
+                    respuesta: {
+                        [op.lte]: 6
+                    }
+                }
+    }).then(response => {
+        respuesta.push(response[0])
+    });
+     
     Feedback.findAll({
         attributes: [
             [Sequelize.fn('COUNT' ,Sequelize.col('respuesta')), 'Passives']],
@@ -29,20 +59,14 @@ app.get('/summarynps',(req,res) => {
                         [op.or]: {
                             [op.eq]: 8
                         } 
-                },[op.and]:{
-                    [Sequelize.fn('COUNT' ,Sequelize.col('respuesta')), 'Promoter'],
-        where: {
-            respuesta: {
-                [op.between]: [9,10]
+                }}}
 
-            }
-        }
     })
     .then(response => {
-        console.log(response)
-        res.json(response)
+        respuesta.push(response[0])
+        res.send(respuesta)
     })
-})
+        })
 
 app.post('/feedback', (req,res) => {
     var fechaactual = Date.now()
