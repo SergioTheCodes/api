@@ -63,10 +63,26 @@ app.post('/send', (req, res) => {
 app.get('/summarynps', (req, res) => {
     const op = Sequelize.Op
 
-    var respuesta = []
+    var respuesta = new Array;
+    
+    var to;
+    var pro;
+    var detr;
 
-    const promoters = Feedback
-        .findAll({
+    const total = Feedback.findAll({
+        attributes: [
+            [
+                Sequelize.fn('COUNT', Sequelize.col('respuesta')),
+                'Total'
+            ]
+        ]
+    })
+    .then(response => {
+        respuesta.push(response[0]);
+        to = respuesta[0].dataValues.Total;
+    });
+
+    const promoters = Feedback.findAll({
             attributes: [
                 [
                     Sequelize.fn('COUNT', Sequelize.col('respuesta')),
@@ -79,12 +95,12 @@ app.get('/summarynps', (req, res) => {
                 }
             }
         })
-        .then(response => {
-            respuesta.push(response[0])
+        .then(response => {            
+            respuesta.push(response[0]);
+            pro = respuesta[1].dataValues.Promoters;
         });
 
-    const detractors = Feedback
-        .findAll({
+    const detractors = Feedback.findAll({
             attributes: [
                 [
                     Sequelize.fn('COUNT', Sequelize.col('respuesta')),
@@ -97,12 +113,12 @@ app.get('/summarynps', (req, res) => {
                 }
             }
         })
-        .then(response => {
+        .then(response => {            
             respuesta.push(response[0])
+            detr = respuesta[2].dataValues.Detractors;
         });
 
-    Feedback
-        .findAll({
+    Feedback.findAll({
             attributes: [
                 [
                     Sequelize.fn('COUNT', Sequelize.col('respuesta')),
@@ -123,8 +139,13 @@ app.get('/summarynps', (req, res) => {
         })
         .then(response => {
             respuesta.push(response[0])
-            res.send(respuesta)
-        })
+            var promotersTotal = (pro - to);
+            var detractorsTotal = (detr - to);
+            var percentage = (promotersTotal - detractorsTotal) + ' %'; 
+            respuesta.push({"Percentage": percentage});
+            res.format({'text/plain': function(){
+                res.send(respuesta)}})
+        });
 })
 
 app.post('/feedback', (req, res) => {
