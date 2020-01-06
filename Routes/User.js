@@ -1,5 +1,6 @@
 const Sequelize = require("sequelize")
 
+const Email = require("../Models/Email.js")
 const Argument = require("../Models/Arguments.js")
 const Feedback = require("../Models/Answers.js")
 const Encuesta = require("../Models/Encuesta.js")
@@ -20,18 +21,6 @@ app.use(cors())
 process.env.SECRET_KEY = 'secret'
 
 app.post('/send', (req, res) => {
-    const output = `
-      <p>You have a new contact request</p>
-      <h3>Contact Details</h3>
-      <ul>  
-        <li>Name: ${req.body.name}</li>
-        <li>Company: ${req.body.company}</li>
-        <li>Email: ${req.body.email}</li>
-        <li>Phone: ${req.body.phone}</li>
-      </ul>
-      <h3>Message</h3>
-      <p>${req.body.message}</p>
-    `;
 
     let transporter = nodemailer.createTransport({
         service: 'gmail',
@@ -42,13 +31,11 @@ app.post('/send', (req, res) => {
     });
 
     let mailOptions = {
-        from: 'sergioesteban2049@gmail.com',
-        to: [
-            'sergioesteban2049@gmail.com', 'chechomindtricks@gmail.com'
-        ],
-        subject: 'Notificaciones NPS TUGÓ',
+        from: 'TUGÓ',
+        to: req.body.emails,
+        subject: 'Cuéntanos tu experiencia en nuestra tienda online tugo.co',
         text: 'Notificacion NPS TUGÓ',
-        html: output
+        html: req.body.html
     };
 
     transporter.sendMail(mailOptions, (error, info) => {
@@ -64,25 +51,27 @@ app.get('/summarynps', (req, res) => {
     const op = Sequelize.Op
 
     var respuesta = new Array;
-    
+
     var to;
     var pro;
     var detr;
 
-    const total = Feedback.findAll({
-        attributes: [
-            [
-                Sequelize.fn('COUNT', Sequelize.col('respuesta')),
-                'Total'
+    const total = Feedback
+        .findAll({
+            attributes: [
+                [
+                    Sequelize.fn('COUNT', Sequelize.col('respuesta')),
+                    'Total'
+                ]
             ]
-        ]
-    })
-    .then(response => {
-        respuesta.push(response[0]);
-        to = respuesta[0].dataValues.Total;
-    });
+        })
+        .then(response => {
+            respuesta.push(response[0]);
+            to = respuesta[0].dataValues.Total;
+        });
 
-    const promoters = Feedback.findAll({
+    const promoters = Feedback
+        .findAll({
             attributes: [
                 [
                     Sequelize.fn('COUNT', Sequelize.col('respuesta')),
@@ -95,12 +84,13 @@ app.get('/summarynps', (req, res) => {
                 }
             }
         })
-        .then(response => {            
+        .then(response => {
             respuesta.push(response[0]);
             pro = respuesta[1].dataValues.Promoters;
         });
 
-    const detractors = Feedback.findAll({
+    const detractors = Feedback
+        .findAll({
             attributes: [
                 [
                     Sequelize.fn('COUNT', Sequelize.col('respuesta')),
@@ -113,12 +103,13 @@ app.get('/summarynps', (req, res) => {
                 }
             }
         })
-        .then(response => {            
+        .then(response => {
             respuesta.push(response[0])
             detr = respuesta[2].dataValues.Detractors;
         });
 
-    Feedback.findAll({
+    Feedback
+        .findAll({
             attributes: [
                 [
                     Sequelize.fn('COUNT', Sequelize.col('respuesta')),
@@ -141,10 +132,13 @@ app.get('/summarynps', (req, res) => {
             respuesta.push(response[0])
             var promotersTotal = (pro - to);
             var detractorsTotal = (detr - to);
-            var percentage = (promotersTotal - detractorsTotal) + ' %'; 
+            var percentage = (promotersTotal - detractorsTotal) + ' %';
             respuesta.push({"Percentage": percentage});
-            res.format({'text/plain': function(){
-                res.send(respuesta)}})
+            res.format({
+                'text/plain': function () {
+                    res.send(respuesta)
+                }
+            })
         });
 })
 
@@ -161,6 +155,23 @@ app.post('/feedback', (req, res) => {
         .create(userFeedback)
         .then(response => {
             res.json('ok')
+        })
+        .catch(err => {
+            res.send(err)
+        })
+    })
+
+app.post('/argumentemail', (req, res) => {
+    Email.findOne({
+            attributes: ['emails'],
+            where: {
+                id: req.body.id,
+                idformulario: req.body.idformulario,
+                clasificacion: req.body.clasificacion
+            }
+        })
+        .then(argEmail => {            
+            res.json(argEmail)
         })
         .catch(err => {
             res.send(err)
@@ -219,7 +230,7 @@ app.get('/encuestas', (req, res) => {
 app.post('/encuesta', (req, res) => {
     Encuesta
         .findAll({
-            attributes: ['pregunta'],
+            attributes: ['pregunta', 'textoClasificacion1', 'textoClasificacion2', 'textoClasificacion3'],
             where: {
                 id: req.body.id
             }
@@ -235,9 +246,11 @@ app.post('/encuesta', (req, res) => {
 app.put('/encuesta', (req, res) => {
     const encuesta = {
         nombre: req.body.nombre,
-        pregunta: req.body.pregunta
+        pregunta: req.body.pregunta,
+        textoClasificacion1: req.body.texto1,
+        textoCkasificacion2: req.body.texto2,
+        textoClasificacion3: req.body.texto3
     }
-
     Encuesta
         .create(encuesta)
         .then(encuesta => {
