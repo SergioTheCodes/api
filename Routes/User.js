@@ -25,13 +25,13 @@ app.post('/send', (req, res) => {
     let transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
-            user: 'sergioesteban2049@gmail.com',
-            pass: 'Ecfw2000'
+            user: 'tugocustomersatisfaction@gmail.com',
+            pass: 'tugonps2000'
         }
     });
 
     let mailOptions = {
-        from: 'TUGÓ',
+        from: 'TUGÓ <tugocustomersatisfaction@gmail.com>',
         to: req.body.emails,
         subject: req.body.subject,
         text: 'Notificacion NPS TUGÓ',
@@ -43,7 +43,7 @@ app.post('/send', (req, res) => {
             return console.log(error);
         }
         console.log('Mensaje Enviado', info.messageId);
-        res.json('112233')
+        res.json('Mensaje Enviado')
     });
 })
 
