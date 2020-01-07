@@ -33,7 +33,7 @@ app.post('/send', (req, res) => {
     let mailOptions = {
         from: 'TUGÓ',
         to: req.body.emails,
-        subject: 'Cuéntanos tu experiencia en nuestra tienda online tugo.co',
+        subject: req.body.subject,
         text: 'Notificacion NPS TUGÓ',
         html: req.body.html
     };
