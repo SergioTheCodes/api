@@ -132,8 +132,9 @@ app.get('/summarynps', (req, res) => {
             respuesta.push(response[0])
             var promotersTotal = (pro - to);
             var detractorsTotal = (detr - to);
-            var percentage = (promotersTotal - detractorsTotal) + ' %';
-            respuesta.push({"Percentage": percentage});
+            var percentage = (promotersTotal - detractorsTotal);
+            var result = (100 - percentage) + ' %';
+            respuesta.push({"Percentage": result});
             res.format({
                 'text/plain': function () {
                     res.send(respuesta)
