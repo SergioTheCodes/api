@@ -1,9 +1,9 @@
 const Sequelize = require("sequelize")
 
-const Email = require("../Models/Email.js")
-const Argument = require("../Models/Arguments.js")
-const Feedback = require("../Models/Answers.js")
-const Encuesta = require("../Models/Encuesta.js")
+const Email = require("../models/Email.js")
+const Argument = require("../models/Arguments.js")
+const Feedback = require("../models/Answers.js")
+const Encuesta = require("../models/Encuesta.js")
 
 const express = require("express")
 const app = express.Router()
@@ -11,8 +11,8 @@ const cors = require("cors")
 const jwt = require("jsonwebtoken")
 const bcrypt = require("bcrypt")
 
-const User = require("../Models/User.js")
-const Rol = require("../Models/Rol.js")
+const User = require("../models/User.js")
+const Rol = require("../models/Rol.js")
 
 const nodemailer = require("nodemailer")
 
@@ -171,7 +171,7 @@ app.post('/argumentemail', (req, res) => {
                 clasificacion: req.body.clasificacion
             }
         })
-        .then(argEmail => {            
+        .then(argEmail => {
             res.json(argEmail)
         })
         .catch(err => {
