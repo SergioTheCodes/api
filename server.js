@@ -9,7 +9,7 @@ app.use(cors())
 app.use(bodyParser.urlencoded({extended:false}));
 
 
-var user = require("./Routes/user");
+var user = require("./Routes/User");
 
 app.use('/nps', user);
 
