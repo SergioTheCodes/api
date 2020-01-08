@@ -1,9 +1,9 @@
 const Sequelize = require("sequelize")
 
-const Email = require("../models/Email.js")
-const Argument = require("../models/Arguments.js")
-const Feedback = require("../models/Answers.js")
-const Encuesta = require("../models/Encuesta.js")
+const Email = require("../models/email.js")
+const Argument = require("../models/arguments.js")
+const Feedback = require("../models/answers.js")
+const Encuesta = require("../models/encuesta.js")
 
 const express = require("express")
 const app = express.Router()
@@ -11,8 +11,8 @@ const cors = require("cors")
 const jwt = require("jsonwebtoken")
 const bcrypt = require("bcrypt")
 
-const User = require("../models/User.js")
-const Rol = require("../models/Rol.js")
+const User = require("../models/user.js")
+const Rol = require("../models/rol.js")
 
 const nodemailer = require("nodemailer")
 
