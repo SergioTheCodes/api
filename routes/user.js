@@ -325,7 +325,7 @@ app.post('/login', (req, res) => {
             if (user) {
                 if (bcrypt.compareSync(req.body.password, user.password)) {
                     let tok = jwt.sign(user.dataValues, process.env.SECRET_KEY, {expiresIn: 1440})
-                    res.send(tok)
+                    res.send({token: tok})
                 }
             } else {
                 res
